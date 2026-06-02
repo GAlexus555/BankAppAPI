@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-SQLALCHEMIE_URL = "sqlite:///cool_db.db"
+SQLALCHEMIE_URL = "sqlite:///src/cool_db.db"
 
 # engine erstellen
 engine = create_engine(SQLALCHEMIE_URL, connect_args={"check_same_thread": False})

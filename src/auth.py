@@ -4,8 +4,8 @@ from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from src.database import get_db
-from src.models import DBAccount, Role
+from database import get_db
+from models import DBAccount, Role
 import hashlib
 import base64
 
@@ -33,10 +33,7 @@ def create_access_token(data: dict) -> str:
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/accounts/login")
 
-def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
-) -> DBAccount:
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> DBAccount:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid credentials",
@@ -56,6 +53,7 @@ def get_current_user(
     return user
 
 def require_role(required_role: Role):
+
     def checker(current_user: DBAccount = Depends(get_current_user)):
         if current_user.role != required_role:
             raise HTTPException(
@@ -63,4 +61,5 @@ def require_role(required_role: Role):
                 detail="Insufficient permissions"
             )
         return current_user
+
     return checker

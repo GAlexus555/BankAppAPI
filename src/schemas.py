@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field, EmailStr
-from models import Role
+from pydantic import BaseModel, Field, EmailStr, field_validator
+from models import Role, Status, TransactionStatus
 from datetime import date
 
 class AccountBase(BaseModel):
@@ -16,9 +16,10 @@ class AccountCreate(AccountBase):
 
 class AccountOut(AccountBase):
     id: int
-    createdat: date
+    created_at: date
 
-    model_config = {"from_attributes": True}
+    class Config:
+        from_attributes = True
 
 class LoginRequest(BaseModel):
     email: EmailStr
@@ -27,3 +28,56 @@ class LoginRequest(BaseModel):
 class TokenOut(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+# ==================================================================================================
+
+class CardBase(BaseModel):
+    cents: int
+    status: Status = Status.Inactive
+    owner_id: int
+    iban: str = Field(..., min_length=16)
+    card_nr: str = Field(..., min_length=8, max_length=19)
+    cvc: int
+    expire_date: date
+
+class CardCreate(CardBase):
+    pass
+
+class CardResponse(CardBase):
+    id: int
+    created_at: date
+
+    class Config:
+        from_attributes = True
+
+#=====================================================================================================
+
+class TransactionBase(BaseModel):
+    amount_cents: int
+
+    from_id: int
+    to_id: int
+
+    @field_validator("amount_cents")
+    @classmethod
+    def validate_amount_cents(cls, value: int):
+        if not isinstance(value, int):
+            raise ValueError("The transaction amount should be an integer")
+        if value <= 0:
+            raise  ValueError("The transaction amount can't be lower or exactly 0")
+
+        return value
+
+    description: str
+    status: TransactionStatus = TransactionStatus.Pending
+
+class TransactionCreate(TransactionBase):
+    pass
+
+class TransactionResponse(TransactionBase):
+    id: int
+    created_at: date
+
+    class Config:
+        from_attributes = True
+

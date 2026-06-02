@@ -29,13 +29,12 @@ class TransactionsAPI:
 
     @router.post("/", response_model=TransactionResponse)
     def create_transaction(self, transactionCreate: TransactionCreate, current_user: DBAccount = Depends(get_current_user)):
-        from_card = self.db.query(DBCard).filter(DBCard.id == transactionCreate.from_id).first()
-        to_card   = self.db.query(DBCard).filter(DBCard.id == transactionCreate.to_id).first()
+        from_card = self.db.query(DBCard).filter(DBCard.iban == transactionCreate.iban_from).first()
+        to_card   = self.db.query(DBCard).filter(DBCard.iban == transactionCreate.iban_to).first()
 
         if from_card is None or to_card is None:
             raise HTTPException(status_code=404, detail="Card not found")
 
-        # Only the card owner (or a manager) can send from a card
         if from_card.owner_id != current_user.id and current_user.role != Role.manager:
             raise HTTPException(status_code=403, detail="Not your card")
 
@@ -46,8 +45,8 @@ class TransactionsAPI:
         to_card.cents += transactionCreate.amount_cents
 
         new_transaction = DBTransaction(
-            from_id=transactionCreate.from_id,
-            to_id=transactionCreate.to_id,
+            from_id=from_card.id,
+            to_id=to_card.id,
             amount_cents=transactionCreate.amount_cents,
             description=transactionCreate.description,
             status=TransactionStatus.Sent,

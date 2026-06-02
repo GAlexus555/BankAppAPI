@@ -1,9 +1,10 @@
 from sqlalchemy import Column, Integer, String, Date, Boolean, TIMESTAMP, text, ForeignKey
+from sqlalchemy.orm import relationship
 from database import Base
 from enum import IntEnum
 
 class Role(IntEnum):
-    client = 0,
+    client = 0
     manager = 1
 
 class DBAccount(Base):
@@ -22,9 +23,9 @@ class DBAccount(Base):
 
 
 class Status(IntEnum):
-    Active = 0,
-    Inactive = 1,
-    Blocked = 2,
+    Active = 0
+    Inactive = 1
+    Blocked = 2
     Expired = 3
 
 class DBCard(Base):
@@ -44,18 +45,31 @@ class DBCard(Base):
 
 
 class TransactionStatus(IntEnum):
-    Pending = 0,
+    Pending = 0
     Sent = 1
 
 class DBTransaction(Base):
     __tablename__ = "transactions"
 
     id = Column(Integer, primary_key=True)
-    from_id = Column(Integer, ForeignKey("cards.id", ondelete="CASCADE"), nullable=False)
-    to_id = Column(Integer, ForeignKey("cards.id", ondelete="CASCADE"), nullable=False)
+
+    from_id = Column(Integer, ForeignKey("cards.id", ondelete="CASCADE"))
+    to_id = Column(Integer, ForeignKey("cards.id", ondelete="CASCADE"))
+
+    from_card = relationship("DBCard", foreign_keys=[from_id])
+    to_card = relationship("DBCard", foreign_keys=[to_id])
+
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
     description = Column(String, nullable=False)
     status = Column(Integer, default=TransactionStatus.Pending, nullable=False)
 
     amount_cents = Column(Integer)
+
+    @property
+    def iban_from(self):
+        return self.from_card.iban
+
+    @property
+    def iban_to(self):
+        return self.to_card.iban
 

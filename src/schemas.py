@@ -55,17 +55,16 @@ class CardResponse(CardBase):
 class TransactionBase(BaseModel):
     amount_cents: int
 
-    from_id: int
-    to_id: int
+    iban_from: str
+    iban_to: str
 
     @field_validator("amount_cents")
     @classmethod
     def validate_amount_cents(cls, value: int):
-        if not isinstance(value, int):
-            raise ValueError("The transaction amount should be an integer")
         if value <= 0:
-            raise  ValueError("The transaction amount can't be lower or exactly 0")
-
+            raise ValueError(
+                "The transaction amount can't be lower or exactly 0"
+            )
         return value
 
     description: str

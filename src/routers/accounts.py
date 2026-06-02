@@ -53,3 +53,16 @@ class AccountsAPI():
     @router.get("/", response_model=list[AccountOut])
     def get_accounts(self, _=Depends(require_role(Role.manager))):
         return self.db.query(DBAccount).all()
+
+    @router.delete("/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
+    def delete_account(self,account_id: int, current_user: DBAccount = Depends(get_current_user), _=Depends(require_role(Role.manager))):
+        if current_user.id == account_id:
+            raise HTTPException(status_code=400, detail="Managers cannot delete themselves")
+
+        account = self.db.query(DBAccount).filter(DBAccount.id == account_id).first()
+
+        if account is None:
+            raise HTTPException(status_code=404, detail="Account not found")
+
+        self.db.delete(account)
+        self.db.commit()

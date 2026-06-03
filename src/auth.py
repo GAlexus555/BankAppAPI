@@ -31,35 +31,31 @@ def create_access_token(data: dict) -> str:
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/accounts/login")
+auth_scheme = OAuth2PasswordBearer(tokenUrl="/accounts/login")
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> DBAccount:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Invalid credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+def get_current_user(token: str = Depends(auth_scheme), db: Session = Depends(get_db)) -> DBAccount:
+    credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials", headers={"WWW-Authenticate": "Bearer"})
+
+    # Versuchen den email aus den Token rauszulesen
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
+        input = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = input.get("sub")
         if email is None:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
 
+    # Den user raus holen
     user = db.query(DBAccount).filter(DBAccount.email == email).first()
     if user is None:
-        raise credentials_exception
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Email has not been found!")
     return user
 
 def require_role(required_role: Role):
-
+    # Funktion um Rolle von authentifizierten User raus zu lesen
     def checker(current_user: DBAccount = Depends(get_current_user)):
         if current_user.role != required_role:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Insufficient permissions"
-            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"{required_role} ist notig!")
         return current_user
 
     return checker

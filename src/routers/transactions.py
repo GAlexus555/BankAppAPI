@@ -4,10 +4,9 @@ from sqlalchemy.orm import Session
 from datetime import date
 
 from database import get_db
-from models import DBAccount, DBCard, DBTransaction, TransactionStatus
+from models import DBAccount, DBCard, DBTransaction, TransactionStatus, Role
 from schemas import TransactionCreate, TransactionResponse
 from auth import get_current_user, require_role
-from models import Role
 
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
 

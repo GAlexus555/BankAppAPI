@@ -7,6 +7,7 @@ from database import get_db
 from models import DBAccount, DBCard, DBInterest, DBBank, Role
 from schemas import CreateInterest, GetInterest
 from auth import get_current_user, require_role
+from audit import AuditLogger
 
 router = APIRouter(prefix="/interests", tags=["Interests"])
 
@@ -52,6 +53,9 @@ class InterestsAPI:
         self.db.add(new_interest)
         self.db.commit()
         self.db.refresh(new_interest)
+
+        AuditLogger(self.db, current_user.id).log("interests", "CREATE", f"interest_id={new_interest.id}, amount={interestCreate.amount}")
+
         return new_interest
 
     @router.post("/{interest_id}/withdraw", response_model=GetInterest)
@@ -78,4 +82,7 @@ class InterestsAPI:
 
         self.db.commit()
         self.db.refresh(interest)
+
+        AuditLogger(self.db, current_user.id).log("interests", "WITHDRAW", f"interest_id={interest.id}, payout={payout}")
+
         return interest

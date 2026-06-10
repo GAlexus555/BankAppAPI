@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, EmailStr, field_validator
 from models import Role, Status, TransactionStatus
-from datetime import date
+from datetime import date, datetime
 
 class AccountBase(BaseModel):
     role: Role = Role.client
@@ -111,3 +111,15 @@ class GetBank(BankBase):
     class Config:
         from_attributes = True
 
+#====================================================================
+
+class GetAuditLog(BaseModel):
+    id: int
+    account_id: int
+    timestamp: datetime
+    tablename: str
+    action: str
+    details: str | None
+
+    class Config:
+        from_attributes = True

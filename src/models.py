@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, Boolean, TIMESTAMP, text, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, Boolean, TIMESTAMP, text, ForeignKey, Double, Float
 from sqlalchemy.orm import relationship
 from database import Base
 from enum import IntEnum
@@ -6,7 +6,6 @@ from enum import IntEnum
 class Role(IntEnum):
     client = 0
     manager = 1
-
 class DBAccount(Base):
     __tablename__ = "accounts"
 
@@ -27,7 +26,6 @@ class Status(IntEnum):
     Inactive = 1
     Blocked = 2
     Expired = 3
-
 class DBCard(Base):
     __tablename__ = "cards"
 
@@ -73,3 +71,27 @@ class DBTransaction(Base):
     def iban_to(self):
         return self.to_card.iban
 
+class DBInterest(Base):
+    __tablename__ = "interests"
+
+    id = Column(Integer, primary_key=True)
+    card_id = Column(Integer, ForeignKey("cards.id", ondelete="CASCADE"))
+    amount = Column(Double)
+    interest_rate = Column(Double, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
+    withdrawn = Column(Boolean, default=False)
+
+class DBBank(Base):
+    __tablename__ = "bank"
+    id = Column(Integer, primary_key=True)
+    bankname = Column(String, nullable=False, index=True)
+    interest_rate = Column(Float, nullable=False)
+
+class DBAuiditLog(Base):
+    __tablename__ = "audit_logs"
+    id = Column(Integer, primary_key=True)
+    account_id = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"))
+    timestamp = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
+    tablename = Column(String, nullable=False)
+    action = Column(String, nullable=False)
+    details = Column(String)

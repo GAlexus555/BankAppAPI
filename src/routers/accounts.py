@@ -17,7 +17,6 @@ router = APIRouter(prefix="/accounts", tags=["Accounts"])
 @cbv(router)
 class AccountsAPI():
     db: Session = Depends(get_db)
-    get_user: DBAccount = Depends(get_current_user)
 
 
     @router.post("/register", response_model=AccountOut, status_code=201)

@@ -80,3 +80,34 @@ class TransactionResponse(TransactionBase):
     class Config:
         from_attributes = True
 
+#==========================================================================
+
+class InterestBase(BaseModel):
+    card_id: int
+    amount: int
+
+class CreateInterest(InterestBase):
+    pass
+
+class GetInterest(InterestBase):
+    created_at: date
+    id: int
+
+    class Config:
+        from_attributes = True
+
+#====================================================================
+
+class BankBase(BaseModel):
+    bankname: str
+    interest_rate: float
+
+class CreateBank(BankBase):
+    pass
+
+class GetBank(BankBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+

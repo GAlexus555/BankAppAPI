@@ -4,7 +4,7 @@ import models
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 import uvicorn
-from routers import accounts, cards, transactions
+from routers import accounts, cards, transactions, interests, bank
 from starlette.responses import JSONResponse
 
 
@@ -32,6 +32,8 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 app.include_router(accounts.router)
 app.include_router(cards.router)
 app.include_router(transactions.router)
+app.include_router(interests.router)
+app.include_router(bank.router)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)

@@ -25,6 +25,11 @@ class CardsAPI():
         cards = self.db.query(DBCard).filter(DBCard.owner_id == user_id).all()
         return cards
 
+    @router.get("/{account_id}", response_model=list[CardResponse])
+    def get_cards_from_user(self, account_id: int, _=Depends(require_role(Role.manager))):
+        cards = self.db.query(DBCard).filter(DBCard.owner_id == account_id).all()
+        return cards
+
     @router.get("/all", response_model=list[CardResponse])
     def get_all_cards(self, _=Depends(require_role(Role.manager))):
         cards = self.db.query(DBCard).all()

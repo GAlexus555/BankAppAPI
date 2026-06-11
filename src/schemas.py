@@ -138,6 +138,7 @@ class GetInterest(InterestBase):
     created_at: date
     id: int
     withdrawn: bool
+    interest_rate: float
 
     class Config:
         from_attributes = True

@@ -137,6 +137,7 @@ class CreateInterest(InterestBase):
 class GetInterest(InterestBase):
     created_at: date
     id: int
+    withdrawn: bool
 
     class Config:
         from_attributes = True

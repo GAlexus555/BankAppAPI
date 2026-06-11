@@ -54,7 +54,7 @@ class InterestsAPI:
         self.db.commit()
         self.db.refresh(new_interest)
 
-        AuditLogger(self.db, current_user.id).log("interests", "CREATE", f"interest_id={new_interest.id}, amount={interestCreate.amount}")
+        #AuditLogger(self.db, current_user.id).log("interests", "CREATE", f"interest_id={new_interest.id}, amount={interestCreate.amount}")
 
         return new_interest
 
@@ -83,6 +83,6 @@ class InterestsAPI:
         self.db.commit()
         self.db.refresh(interest)
 
-        AuditLogger(self.db, current_user.id).log("interests", "WITHDRAW", f"interest_id={interest.id}, payout={payout}")
+        #AuditLogger(self.db, current_user.id).log("interests", "WITHDRAW", f"interest_id={interest.id}, payout={payout}")
 
         return interest

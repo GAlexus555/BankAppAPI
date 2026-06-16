@@ -18,7 +18,27 @@ class AccountBase(BaseModel):
     
     email: EmailStr
     phonenumber: str
+
+
+    @field_validator("phonenumber")
+    @classmethod
+    def validate_phonenumber(cls, value: str) -> str:
+        value = value.replace(" ", "").replace("-", "")
+        if not value.lstrip("+").isalnum(): # lstrip("+") macht vom anfang der nummer das + weg das man nur auf nummern überprüfen kann
+            raise ValueError("Phone number must contain only digits, spaces, hyphens or a + at the start")
+        if len(value) < 7 or len(value) > 15:
+            raise ValueError("Phone number must be between 7 and 15 digits")
+        return value
+
     address: str
+
+    @field_validator("address")
+    @classmethod
+    def validate_address(cls, value: str) -> str:
+        if len(value) < 5 or len(value) > 100:
+            raise ValueError("Address must be between 5 and 100 characters")
+        return value.strip()
+
     birthdate: date
 
 class AccountCreate(AccountBase):
@@ -104,9 +124,6 @@ class CardResponse(CardBase):
 class TransactionBase(BaseModel):
     amount_cents: int
 
-    iban_from: str
-    iban_to: str
-
     @field_validator("amount_cents")
     @classmethod
     def validate_amount_cents(cls, value: int):
@@ -116,7 +133,21 @@ class TransactionBase(BaseModel):
             )
         return value
 
-    description: str
+    iban_from: str
+    iban_to: str
+
+    @field_validator("iban_from", "iban_to")
+    @classmethod
+    def validate_ibans(cls, value: str) -> str:
+        value = value.replace(" ", "").upper()
+        if not value[:2].isalpha() or not value[2:].isalnum():
+            raise ValueError("IBAN must start with a 2-letter country code")
+        if len(value) < 15 or len(value) > 34:
+            raise ValueError("IBAN length is invalid")
+        return value
+
+
+    description: str = Field(..., max_length=255)
     status: TransactionStatus = TransactionStatus.Pending
 
 class TransactionCreate(TransactionBase):

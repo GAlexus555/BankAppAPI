@@ -88,6 +88,10 @@ class CardBase(BaseModel):
 class CardCreate(CardBase):
     pass
 
+class CardUpdate(BaseModel):
+    status: Status
+    expire_date: date
+
 class CardResponse(CardBase):
     id: int
     created_at: date
@@ -159,6 +163,16 @@ class GetBank(BankBase):
         from_attributes = True
 
 #====================================================================
+
+class TransactionStats(BaseModel):
+    account_id: int
+    firstname: str
+    lastname: str
+    transaction_count: int
+    total_cents: int
+
+    class Config:
+        from_attributes = True
 
 class GetAuditLog(BaseModel):
     id: int

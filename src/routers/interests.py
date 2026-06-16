@@ -51,11 +51,9 @@ class InterestsAPI:
         )
 
         self.db.add(new_interest)
+        AuditLogger(self.db, current_user.id).log("interests", "CREATE", f"amount={interestCreate.amount}, card_id={card.id}")
         self.db.commit()
         self.db.refresh(new_interest)
-
-        #AuditLogger(self.db, current_user.id).log("interests", "CREATE", f"interest_id={new_interest.id}, amount={interestCreate.amount}")
-
         return new_interest
 
     @router.post("/{interest_id}/withdraw", response_model=GetInterest)
@@ -80,9 +78,7 @@ class InterestsAPI:
         card.cents += payout
         interest.withdrawn = True
 
+        AuditLogger(self.db, current_user.id).log("interests", "WITHDRAW", f"interest_id={interest.id}, payout={payout}")
         self.db.commit()
         self.db.refresh(interest)
-
-        #AuditLogger(self.db, current_user.id).log("interests", "WITHDRAW", f"interest_id={interest.id}, payout={payout}")
-
         return interest

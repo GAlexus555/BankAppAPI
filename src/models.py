@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, Date, Boolean, TIMESTAMP, text, ForeignKey, Double, Float
 from sqlalchemy.orm import relationship
 from database import Base
@@ -17,7 +18,7 @@ class DBAccount(Base):
     phonenumber = Column(String, nullable=False)
     address = Column(String, nullable=False)
     birthdate = Column(Date, nullable=False)
-    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('CURRENT_TIMESTAMP'))
     role = Column(Integer, default=Role.client, nullable=False)
 
 
@@ -32,7 +33,7 @@ class DBCard(Base):
     cents = Column(Integer)
 
     id = Column(Integer, primary_key=True)
-    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('CURRENT_TIMESTAMP'))
     owner_id = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False)
 
     iban = Column(String, nullable=False)
@@ -57,7 +58,7 @@ class DBTransaction(Base):
     from_card = relationship("DBCard", foreign_keys=[from_id])
     to_card = relationship("DBCard", foreign_keys=[to_id])
 
-    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('CURRENT_TIMESTAMP'))
     description = Column(String, nullable=False)
     status = Column(Integer, default=TransactionStatus.Pending, nullable=False)
 
@@ -78,7 +79,7 @@ class DBInterest(Base):
     card_id = Column(Integer, ForeignKey("cards.id", ondelete="CASCADE"))
     amount = Column(Double)
     interest_rate = Column(Double, nullable=False)
-    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('CURRENT_TIMESTAMP'))
     withdrawn = Column(Boolean, default=False)
 
 class DBBank(Base):
@@ -91,7 +92,7 @@ class DBAuiditLog(Base):
     __tablename__ = "audit_logs"
     id = Column(Integer, primary_key=True)
     account_id = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"))
-    timestamp = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
+    timestamp = Column(TIMESTAMP(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     tablename = Column(String, nullable=False)
     action = Column(String, nullable=False)
     details = Column(String)

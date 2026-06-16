@@ -7,6 +7,7 @@ from database import get_db
 from models import DBAccount, DBCard, DBTransaction, TransactionStatus, Role
 from schemas import TransactionCreate, TransactionResponse
 from auth import get_current_user, require_role
+from audit import AuditLogger
 
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
 
@@ -53,6 +54,8 @@ class TransactionsAPI:
         )
 
         self.db.add(new_transaction)
+        self.db.flush()
+        AuditLogger(self.db, current_user.id).log("transactions", "CREATE", f"from={transactionCreate.iban_from}, to={transactionCreate.iban_to}, amount_cents={transactionCreate.amount_cents}")
         self.db.commit()
         self.db.refresh(new_transaction)
         return new_transaction

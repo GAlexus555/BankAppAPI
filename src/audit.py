@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from models import DBAuiditLog
 
@@ -12,7 +13,7 @@ class AuditLogger:
             account_id=self.account_id,
             tablename=tablename,
             action=action,
-            details=details
+            details=details,
+            timestamp=datetime.now(timezone.utc)
         )
         self.db.add(entry)
-        self.db.commit()

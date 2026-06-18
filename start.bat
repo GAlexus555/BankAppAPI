@@ -8,5 +8,6 @@ python init_db.py
 
 echo.
 echo Starting API...
-uvicorn src.main:app --reload
+set PYTHONPATH=src
+python -m uvicorn src.main:app --reload
 pause

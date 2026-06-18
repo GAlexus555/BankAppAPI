@@ -113,7 +113,7 @@ class AccountCreate(AccountBase):
 
 class AccountOut(AccountBase):
     id: int = Field(..., description="Eindeutige Benutzer-ID", example=1)
-    created_at: date = Field(..., description="Erstellungsdatum des Kontos", example="2024-01-01")
+    created_at: datetime = Field(..., description="Erstellungszeitpunkt des Kontos")
 
     class Config:
         from_attributes = True
@@ -232,8 +232,8 @@ class CardUpdate(BaseModel):
 
 
 class CardResponse(CardBase):
-    id: int         = Field(..., description="Eindeutige Karten-ID", example=1)
-    created_at: date = Field(..., description="Erstellungsdatum der Karte", example="2024-01-01")
+    id: int          = Field(..., description="Eindeutige Karten-ID", example=1)
+    created_at: datetime = Field(..., description="Erstellungszeitpunkt der Karte")
 
     class Config:
         from_attributes = True
@@ -306,8 +306,8 @@ class TransactionCreate(TransactionBase):
 
 
 class TransactionResponse(TransactionBase):
-    id: int          = Field(..., description="Eindeutige Transaktions-ID", example=1)
-    created_at: date = Field(..., description="Datum der Transaktion", example="2025-03-01")
+    id: int              = Field(..., description="Eindeutige Transaktions-ID", example=1)
+    created_at: datetime = Field(..., description="Zeitpunkt der Transaktion")
 
     class Config:
         from_attributes = True
@@ -340,7 +340,7 @@ class CreateInterest(InterestBase):
 
 
 class GetInterest(InterestBase):
-    created_at: date    = Field(..., description="Anlagedatum", example="2024-06-01")
+    created_at: datetime = Field(..., description="Anlagezeitpunkt")
     id: int             = Field(..., description="Eindeutige Zinsen-ID", example=1)
     withdrawn: bool     = Field(..., description="`true` wenn bereits ausgezahlt", example=False)
     interest_rate: float = Field(..., description="Jahreszinssatz zum Anlagezeitpunkt (z. B. `0.035` = 3,5 %)", example=0.035)

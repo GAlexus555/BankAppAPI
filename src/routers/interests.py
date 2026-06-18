@@ -16,16 +16,45 @@ router = APIRouter(prefix="/interests", tags=["Interests"])
 class InterestsAPI:
     db: Session = Depends(get_db)
 
-    @router.get("/", response_model=list[GetInterest])
+    @router.get(
+        "/",
+        response_model=list[GetInterest],
+        summary="Eigene Sparzinsen abrufen",
+        description="Gibt alle Sparzinseinlagen des aktuell angemeldeten Benutzers zurück.",
+    )
     def get_my_interests(self, current_user: DBAccount = Depends(get_current_user)):
         card_ids = [c.id for c in self.db.query(DBCard).filter(DBCard.owner_id == current_user.id).all()]
         return self.db.query(DBInterest).filter(DBInterest.card_id.in_(card_ids)).all()
 
-    @router.get("/all", response_model=list[GetInterest])
+    @router.get(
+        "/all",
+        response_model=list[GetInterest],
+        summary="Alle Sparzinsen abrufen (Manager)",
+        description="Gibt alle Sparzinseinlagen aller Kunden zurück. Nur für Manager zugänglich.",
+    )
     def get_all_interests(self, _=Depends(require_role(Role.manager))):
         return self.db.query(DBInterest).all()
 
-    @router.post("/", response_model=GetInterest)
+    @router.post(
+        "/",
+        response_model=GetInterest,
+        summary="Sparzinseinlage erstellen",
+        description="""
+Legt einen Betrag von einer Karte als Sparzinseinlage an.
+Der Betrag wird sofort vom Kartenguthaben abgebucht.
+Der aktuelle Zinssatz der Bank wird gespeichert.
+
+**Wertebereiche:**
+- `card_id`: ID einer existierenden Karte (> 0)
+- `amount`: Anlagebetrag in Cent (> 0, muss als Guthaben vorhanden sein)
+
+**Fehler:**
+- `400` – Nicht genug Guthaben auf der Karte
+- `400` – Keine Bank mit Zinssatz konfiguriert
+- `403` – Die Karte gehört nicht dem angemeldeten Benutzer
+- `404` – Karte nicht gefunden
+""",
+    )
     def create_interest(self, interestCreate: CreateInterest, current_user: DBAccount = Depends(get_current_user)):
         card = self.db.query(DBCard).filter(DBCard.id == interestCreate.card_id).first()
         if card is None:
@@ -40,14 +69,14 @@ class InterestsAPI:
         card.cents -= interestCreate.amount
         interest_rate_db = self.db.query(DBBank).first().interest_rate
         if interest_rate_db is None:
-            raise  HTTPException(status_code=400, detail="At the time, no banks support this feature")
+            raise HTTPException(status_code=400, detail="At the time, no banks support this feature")
 
         new_interest = DBInterest(
             created_at=date.today(),
             withdrawn=False,
-            interest_rate = interest_rate_db,
-            amount = interestCreate.amount,
-            card_id = card.id,
+            interest_rate=interest_rate_db,
+            amount=interestCreate.amount,
+            card_id=card.id,
         )
 
         self.db.add(new_interest)
@@ -56,7 +85,23 @@ class InterestsAPI:
         self.db.refresh(new_interest)
         return new_interest
 
-    @router.post("/{interest_id}/withdraw", response_model=GetInterest)
+    @router.post(
+        "/{interest_id}/withdraw",
+        response_model=GetInterest,
+        summary="Sparzinseinlage auszahlen",
+        description="""
+Zahlt eine Sparzinseinlage inkl. aufgelaufener Zinsen auf die Ursprungskarte aus.
+
+**Berechnung:** `Auszahlung = Betrag × (1 + Zinssatz) ^ Jahre`
+
+Die Zinsen werden nach dem Anlagezeitraum in Jahren (anteilig nach Tagen) berechnet.
+
+**Fehler:**
+- `400` – Bereits ausgezahlt
+- `403` – Die Einlage gehört nicht dem angemeldeten Benutzer
+- `404` – Einlage oder Karte nicht gefunden
+""",
+    )
     def withdraw_interest(self, interest_id: int, current_user: DBAccount = Depends(get_current_user)):
         interest = self.db.query(DBInterest).filter(DBInterest.id == interest_id).first()
         if interest is None:

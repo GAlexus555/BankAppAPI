@@ -1,3 +1,6 @@
+# KI-Anfang
+# KI: Claude
+# prompt: FastAPI Aggregationsendpunkt mit GROUP BY und JOIN über accounts, cards und transactions
 from fastapi import APIRouter, Depends
 from fastapi_restful.cbv import cbv
 from sqlalchemy.orm import Session
@@ -15,7 +18,21 @@ router = APIRouter(prefix="/stats", tags=["Stats"])
 class StatsAPI:
     db: Session = Depends(get_db)
 
-    @router.get("/transactions-per-account", response_model=list[TransactionStats])
+    @router.get(
+        "/transactions-per-account",
+        response_model=list[TransactionStats],
+        summary="Transaktionsstatistik pro Konto (Manager)",
+        description="""
+Gibt für jeden Benutzer die Anzahl und das Gesamtvolumen aller ausgehenden Transaktionen zurück.
+Nützlich für die Darstellung in Diagrammen und Ranglisten. Nur für Manager zugänglich.
+
+**Antwortfelder:**
+- `account_id`: Benutzer-ID
+- `firstname`, `lastname`: Name des Benutzers
+- `transaction_count`: Anzahl ausgehender Transaktionen
+- `total_cents`: Gesamtvolumen in Cent (z. B. `15000` = 150,00 €)
+""",
+    )
     def get_transactions_per_account(self, _=Depends(require_role(Role.manager))):
         rows = (
             self.db.query(
@@ -40,3 +57,4 @@ class StatsAPI:
             )
             for row in rows
         ]
+# KI-Ende

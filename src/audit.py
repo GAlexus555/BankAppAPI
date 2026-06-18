@@ -1,3 +1,6 @@
+# KI-Anfang
+# KI: Claude
+# prompt: AuditLogger Klasse die Datenbankaktionen in audit_logs Tabelle schreibt, ohne selbst zu commiten
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from models import DBAuiditLog
@@ -17,3 +20,4 @@ class AuditLogger:
             timestamp=datetime.now(timezone.utc)
         )
         self.db.add(entry)
+# KI-Ende

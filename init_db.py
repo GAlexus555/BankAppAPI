@@ -1,3 +1,6 @@
+# KI-Anfang
+# KI: Claude
+# prompt: init_db.py Skript das alle SQLAlchemy Tabellen anlegt ohne die App zu starten
 from src.database import engine, Base
 import src.models
 
@@ -8,3 +11,4 @@ def init():
 
 if __name__ == "__main__":
     init()
+# KI-Ende

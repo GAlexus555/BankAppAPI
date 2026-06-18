@@ -16,18 +16,71 @@ router = APIRouter(prefix="/transactions", tags=["Transactions"])
 class TransactionsAPI:
     db: Session = Depends(get_db)
 
-    @router.get("/", response_model=list[TransactionResponse])
+    @router.get(
+        "/",
+        response_model=list[TransactionResponse],
+        summary="Eigene Transaktionen abrufen",
+        description="Gibt alle ein- und ausgehenden Transaktionen des aktuell angemeldeten Benutzers zurück.",
+    )
     def get_my_transactions(self, current_user: DBAccount = Depends(get_current_user)):
         card_ids = [c.id for c in self.db.query(DBCard).filter(DBCard.owner_id == current_user.id).all()]
-
-        transactions = self.db.query(DBTransaction).filter((DBTransaction.from_id.in_(card_ids)) | (DBTransaction.to_id.in_(card_ids))).all()
+        transactions = self.db.query(DBTransaction).filter(
+            (DBTransaction.from_id.in_(card_ids)) | (DBTransaction.to_id.in_(card_ids))
+        ).all()
         return transactions
 
-    @router.get("/all", response_model=list[TransactionResponse])
+    @router.get(
+        "/all",
+        response_model=list[TransactionResponse],
+        summary="Alle Transaktionen abrufen (Manager)",
+        description="Gibt alle Transaktionen im System zurück. Nur für Manager zugänglich.",
+    )
     def get_all_transactions(self, _=Depends(require_role(Role.manager))):
         return self.db.query(DBTransaction).all()
 
-    @router.post("/", response_model=TransactionResponse)
+    @router.get(
+        "/account/{account_id}",
+        response_model=list[TransactionResponse],
+        summary="Transaktionen eines Benutzers abrufen (Manager)",
+        description="""
+Gibt alle ein- und ausgehenden Transaktionen des Benutzers mit der angegebenen Konto-ID zurück.
+Sortiert nach Datum absteigend. Nur für Manager.
+
+**Fehler:**
+- Leere Liste wenn der Benutzer keine Karten oder Transaktionen hat
+""",
+    )
+    def get_transactions_by_account(self, account_id: int, _=Depends(require_role(Role.manager))):
+        card_ids = [c.id for c in self.db.query(DBCard).filter(DBCard.owner_id == account_id).all()]
+        return (self.db.query(DBTransaction)
+                .filter((DBTransaction.from_id.in_(card_ids)) | (DBTransaction.to_id.in_(card_ids)))
+                .order_by(DBTransaction.created_at.desc())
+                .all())
+
+    @router.post(
+        "/",
+        response_model=TransactionResponse,
+        summary="Überweisung durchführen",
+        description="""
+Führt eine Überweisung zwischen zwei Karten durch.
+
+**Wertebereiche:**
+- `amount_cents`: Betrag in Cent, muss > 0 sein (z. B. `1000` = 10,00 €)
+- `iban_from`: IBAN der Absenderkarte (15–34 Zeichen)
+- `iban_to`: IBAN der Empfängerkarte (15–34 Zeichen)
+- `description`: Verwendungszweck, max. 255 Zeichen
+
+**Voraussetzungen:**
+- Beide IBANs müssen im System vorhanden sein
+- Die Absenderkarte muss dem angemeldeten Benutzer gehören (außer Manager)
+- Ausreichendes Guthaben muss vorhanden sein
+
+**Fehler:**
+- `400` – Nicht genug Guthaben auf der Absenderkarte
+- `403` – Die Absenderkarte gehört nicht dem angemeldeten Benutzer
+- `404` – Karte nicht gefunden
+""",
+    )
     def create_transaction(self, transactionCreate: TransactionCreate, current_user: DBAccount = Depends(get_current_user)):
         from_card = self.db.query(DBCard).filter(DBCard.iban == transactionCreate.iban_from).first()
         to_card   = self.db.query(DBCard).filter(DBCard.iban == transactionCreate.iban_to).first()
